@@ -10,7 +10,7 @@ For educational purposes. Please do not use this on production environment.
 ```php
 use Md\Db;
 
-Db::setContext('mycontext', [
+Db::register('mycontext', [
     'db_type' => 'mysql',
     'db_dsn' => 'mysql:host=localhost;port=3306;dbname=mydb;charset=utf8',
     'db_user' => 'myusername', // 'root' if undefined
@@ -32,7 +32,7 @@ $result = $db->fetch('select * from mytable where id=:id', [':id' => 1]);
 $result = $db->exec('update mytable set name=:name where id=:id', [':id' => 1, ':name' => 'Mike']);
 ```
 
-### Reposiroty usage
+### Repository usage
 
 ```php
 use Md\Db\Repository;

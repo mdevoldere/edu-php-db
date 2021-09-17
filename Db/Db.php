@@ -18,7 +18,7 @@ class Db
     /** @var array[] $config Temp DbConfig Storage (deleted when connection is established) */
     static private array $config = [];
 
-    /** @var IDbContext[] $context DbContext storage */
+    /** @var DbContextInterface[] $context DbContext storage */
     static private array $context = [];
 
     /**
@@ -90,7 +90,7 @@ class Db
      * ]
      * @return DbContextInterface a new DbContextInterface object
      */
-    static private function createContext(array $c): ?DbContextInterface
+    static public function createContext(array $c): ?DbContextInterface
     {
         try {
             switch ($c['db_type']) {
