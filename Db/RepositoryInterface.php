@@ -3,7 +3,11 @@
 namespace Md\Db;
 
 /**
- * Represents a Table with basics operations
+ * RepositoryInterface Represents a Table with basics operations
+ * 
+ * @author   MDevoldere 
+ * @version  1.0.0
+ * @access   public
  */
 interface RepositoryInterface 
 {
@@ -62,11 +66,10 @@ interface RepositoryInterface
 
     /**
      * Update a row in current table
-     * @param string $_id row identifier
      * @param array $_input data to update
      * @return bool true if row updated, false otherwise
      */
-    public function update(string $_id, array $_input): bool;
+    public function update(array $_input): bool;
 
     /**
      * Delete a row in table

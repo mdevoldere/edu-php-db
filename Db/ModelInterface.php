@@ -2,7 +2,12 @@
 
 namespace Md\Db;
 
-
+/** Interface ModelInterface
+ *
+ * @author   MDevoldere 
+ * @version  1.0.0
+ * @access   public
+ */
 interface ModelInterface
 {
     /**
@@ -15,7 +20,7 @@ interface ModelInterface
      * Check if model data is valid
      * @return bool true if model is valid, false otherwrise
      */
-    public function isValid(): bool;
+    public function validate(): bool;
 
     /**
      * Get the current Model data as array

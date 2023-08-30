@@ -4,6 +4,12 @@ namespace Md\Db;
 
 use function basename;
 
+/** Class Repository
+ *
+ * @author   MDevoldere 
+ * @version  1.1.0
+ * @access   public
+ */
 class Repository implements RepositoryInterface
 {
     /** @var string $table the table name */
@@ -13,7 +19,7 @@ class Repository implements RepositoryInterface
     public string $pk;
 
     /** @var DbContextInterface $db the dbcontext object */
-    protected DbContextInterface $db;
+    public readonly DbContextInterface $db;
 
     /**
      * Initialize a new Repository
@@ -38,7 +44,7 @@ class Repository implements RepositoryInterface
      */
     public function count(): int
     {
-        return $this->db->query(("SELECT COUNT(*) as nb FROM " . $this->table . ";"), false)['nb'];
+        return $this->db->query(("SELECT COUNT(*) as nb FROM " . $this->table . ";"), false)['nb'] ?? 0;
     }
 
     /**
@@ -48,7 +54,7 @@ class Repository implements RepositoryInterface
      */
     public function exists($_id): bool
     {
-        return $this->db->fetch("SELECT COUNT(*) as nb FROM " . $this->table . " WHERE " . $this->pk . "=:cond;", [':cond' => $_id], false)['nb'] > 0;
+        return $this->db->fetch("SELECT COUNT(*) as nb FROM " . $this->table . " WHERE " . $this->pk . "=:cond;", [':cond' => $_id])['nb'] ?? 0 > 0;
     }
 
     /**
@@ -57,7 +63,7 @@ class Repository implements RepositoryInterface
      */
     public function getAll(): array
     {
-        return $this->db->query(("SELECT * FROM " . $this->table . ";"), true);
+        return $this->db->query(("SELECT * FROM " . $this->table . ";"));
     }
 
     /**
@@ -68,7 +74,7 @@ class Repository implements RepositoryInterface
      */
     public function getBy(string $_col, string $_value, bool $_all = false) : array
     {
-        return $this->db->fetch("SELECT * FROM " . $this->table . " WHERE " . basename($_col) . "=:cond;", [':cond' => $_value], $_all);
+        return $this->db->fetchAll("SELECT * FROM " . $this->table . " WHERE " . basename($_col) . "=:cond;", [':cond' => $_value]);
     }
 
     /**
@@ -78,7 +84,7 @@ class Repository implements RepositoryInterface
      */
     public function getById($_id): array
     {
-        return $this->getBy($this->pk, $_id, false);
+        return $this->db->fetch("SELECT * FROM " . $this->table . " WHERE " . $this->pk . "=:cond;", [':cond' => $_id]);
     }
 
     /**
@@ -92,7 +98,7 @@ class Repository implements RepositoryInterface
     /**
      * Clean & Validate array structure matching current table. clean data if necessary
      * @param array $_input the array to validate
-     * @return bool true if array is valid, false if invalid 
+     * @return bool true if array is valid, false otherwise 
      */
     public function validate(array &$_input): bool
     {
@@ -116,11 +122,10 @@ class Repository implements RepositoryInterface
 
     /**
      * Update a row in current table
-     * @param string $_id row identifier
      * @param array $_input data to update
      * @return bool true if row updated, false otherwise
      */
-    public function update($_id, array $_input): bool
+    public function update(array $_input): bool
     {
         if($this->validate($_input)) {
             return $this->db->update($this->table, $this->pk, $_input) > 0;
@@ -135,10 +140,7 @@ class Repository implements RepositoryInterface
      */
     public function delete($_id): bool
     {   
-        if($this->validate($_input)) {
-            return $this->db->delete($this->table, $this->pk, $_id) > 0;
-        }
-        return false;
+        return $this->db->delete($this->table, $this->pk, $_id) > 0;
     }
 
     

@@ -10,7 +10,7 @@ use PDOException;
 /** Class DbContext
  *
  * @author   MDevoldere 
- * @version  1.0.1
+ * @version  1.1.0
  * @access   public
  */
 class DbContext implements DbContextInterface 
@@ -21,9 +21,12 @@ class DbContext implements DbContextInterface
      * @param bool $_all true = return all lines. false = return first line
      * @return array result set or empty array
      */
-    static protected function fetchStmt(PDOStatement $stmt, bool $_all = false): array
+    static protected function fetchStmt(PDOStatement $stmt, bool $_all = false, ?string $model = null): array
     {
         try {
+            if($model !== null) {
+                $stmt->setFetchMode(PDO::FETCH_CLASS, $model);
+            }
             $r = (($_all === false) ? $stmt->fetch() : $stmt->fetchAll());
             $stmt->closeCursor();
             return (!empty($r) ? $r : []);
@@ -33,7 +36,7 @@ class DbContext implements DbContextInterface
     }
 
     /** @var PDO $db PDO Connection */
-    protected ?PDO $pdo = null;
+    public readonly ?PDO $pdo;
 
     /**
      * DbContext Constructor
@@ -43,40 +46,31 @@ class DbContext implements DbContextInterface
         $this->pdo = $_pdo;
     }  
 
-    /**
-     * Get current PDO instance
-     * @return PDO Current PDO instance
-     */
-    public function getPdo(): PDO
-    {
-        return $this->pdo;
-    }
-
     /** Performs a simple read request 
      * @param string $_query SQL query to execute 
-     * @param bool $_all true = return all rows. false = return first row
+     * @param string $model the model to use in statement
      * @return mixed result set or empty array 
      */
-    public function query(string $_query, bool $_all = false): array
+    public function query(string $_query, ?string $model = null): array
     {
         try {
-            return self::fetchStmt($this->pdo->query($_query), $_all);
+            return self::fetchStmt($this->pdo->query($_query), true, $model);
         } catch (Exception $e) {
-            exit('DbQuery Error');
+            exit('DbQuery Error' . $e->getMessage());
         }
     }
 
     /** Executes a parameterized read request
      * @param string $_query SQL query to execute
      * @param array $_values the values associated with the query parameters
-     * @param bool $_all true = return all rows. false = return first row
+     * @param string $model the model to use in statement
      * @return mixed result set or empty array 
      */
-    public function fetch(string $_query, array $_values = [], bool $_all = false): array
+    public function fetch(string $_query, array $_values = [], ?string $model = null): array
     {
         try {
             $stmt = $this->pdo->prepare($_query);
-            return ($stmt->execute($_values) ? static::fetchStmt($stmt, $_all) : []);
+            return ($stmt->execute($_values) ? static::fetchStmt($stmt, false, $model) : []);
         } catch (Exception $e) {
             exit('DbFetch Error' . $e->getMessage());
         }
@@ -85,11 +79,17 @@ class DbContext implements DbContextInterface
     /** Execute a parameterized read request and return all rows  
      * @param string $_query SQL query to execute
      * @param array $_values the values associated with the query parameters
+     * @param string $model the model to use in statement
      * @return mixed result set or empty array 
      */
-    public function fetchAll(string $_query, array $_values = []): array
+    public function fetchAll(string $_query, array $_values = [], ?string $model = null): array
     {
-        return $this->fetch($_query, $_values, true);
+        try {
+            $stmt = $this->pdo->prepare($_query);
+            return ($stmt->execute($_values) ? static::fetchStmt($stmt, true, $model) : []);
+        } catch (Exception $e) {
+            exit('DbFetch Error' . $e->getMessage());
+        }
     }
 
     /** Executes a parameterized write request and returns the number of rows affected
@@ -109,7 +109,7 @@ class DbContext implements DbContextInterface
             }
             return 0;
         } catch (Exception $e) {
-            exit('DbExec Error');
+            exit('DbExec Error : ' . $e->getMessage());
         }
     }
 
@@ -146,10 +146,12 @@ class DbContext implements DbContextInterface
                 $id = $v;
             }            
         }
-
+        
         if($id !== null) {
-            return $this->exec("UPDATE " . $_table  . " SET " . \implode(', ', $cols) . " WHERE " . $_pk  . "=:" . $id  . " LIMIT 1;", $_values);
+            return $this->exec("UPDATE " . $_table  . " SET " . \implode(', ', $cols) . " WHERE " . $_pk  . "=:" . $_pk  . " LIMIT 1;", $_values);
         }
+
+        return 0;
     }
 
     /** Delete a row in specific table
