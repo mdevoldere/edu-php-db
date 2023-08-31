@@ -35,7 +35,7 @@ class Db
      * @param string $_context the DbContext Name
      * @return DbContextInterface the DbContext object
      */
-    public static function getContext(string $_context): DbContextInterface
+    public static function getContext(string $_context = 'default'): DbContextInterface
     {
         if(!isset(self::$ctx[$_context])) {
             $p = (self::$cfgDir . $_context . '.php');

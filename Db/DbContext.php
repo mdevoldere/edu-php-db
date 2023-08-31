@@ -35,7 +35,7 @@ class DbContext implements DbContextInterface
         }
     }
 
-    /** @var PDO $db PDO Connection */
+    /** @var PDO $pdo PDO Connection */
     public readonly ?PDO $pdo;
 
     /**
