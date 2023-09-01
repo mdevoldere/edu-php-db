@@ -2,15 +2,17 @@
 
 namespace Md\Db;
 
+use Md\Db\Exceptions\BadContextException;
+
 use function basename;
 
-/** Class Repository
+/** Class RepositoryFile
  *
  * @author   MDevoldere 
  * @version  1.1.0
  * @access   public
  */
-class Repository implements RepositoryInterface
+class RepositoryFile implements RepositoryInterface
 {
     /** @var string $table the table name */
     public string $table;
@@ -18,8 +20,10 @@ class Repository implements RepositoryInterface
     /** @var string $pk the table primary key name */
     public string $pk;
 
-    /** @var DbContextInterface $db the dbcontext object */
-    public readonly DbContextInterface $db;
+    /** @var string $file the file containing data */
+    public readonly string $file;
+
+    private array $db;
 
     /**
      * Initialize a new Repository
@@ -29,13 +33,17 @@ class Repository implements RepositoryInterface
      */
     public function __construct(string $_table, string $_pk, string $_dbContext = 'default')
     {
+        if(!is_file($_dbContext)) {
+            throw new BadContextException('File not found ('.$_dbContext.')');
+        }
+
         $this->table = $_table;
         $this->pk = $_pk;
-        $this->db = Db::getContext($_dbContext);
-
-        if(empty($this->db)) {
-            exit('Repository Error 1 ('.$_dbContext.')');
-        }
+        $this->file = $_dbContext;
+        $ext = pathinfo($this->file, PATHINFO_EXTENSION);
+        $this->db = ($ext === 'json' 
+                    ? json_decode(file_get_contents($this->file), true) 
+                    : (require $this->file));
     }
 
     /**
@@ -44,7 +52,7 @@ class Repository implements RepositoryInterface
      */
     public function count(): int
     {
-        return $this->db->query(("SELECT COUNT(*) as nb FROM " . $this->table . ";"), false)['nb'] ?? 0;
+        return count($this->db);
     }
 
     /**
@@ -54,7 +62,12 @@ class Repository implements RepositoryInterface
      */
     public function exists($_id): bool
     {
-        return $this->db->fetch("SELECT COUNT(*) as nb FROM " . $this->table . " WHERE " . $this->pk . "=:cond;", [':cond' => $_id])['nb'] ?? 0 > 0;
+        foreach($this->db as $v) {
+            if($v[$this->pk] ?? '' === $_id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -63,7 +76,7 @@ class Repository implements RepositoryInterface
      */
     public function getAll(): array
     {
-        return $this->db->query(("SELECT * FROM " . $this->table . ";"));
+        return $this->db;
     }
 
     /**
@@ -71,20 +84,27 @@ class Repository implements RepositoryInterface
      * @param string $_col the column in table
      * @param string $_value the value to search in column
      * @param bool $_all true to get all result set, false to get the first row found
+     * @return array found row(s) or empty array
      */
     public function getBy(string $_col, string $_value, bool $_all = false) : array
     {
-        return $this->db->fetchAll("SELECT * FROM " . $this->table . " WHERE " . basename($_col) . "=:cond;", [':cond' => $_value]);
+        $r = [];
+        foreach($this->db as $v) {
+            if($v[$_col] ?? '' === $_value) {
+                $r[] = $v;
+            }
+        }
+        return $r;
     }
 
     /**
      * Get row by identifier
      * @param string $_id identifier to search
-     * @return array row found or empty array
+     * @return array found row or empty array
      */
     public function getById($_id): array
     {
-        return $this->db->fetch("SELECT * FROM " . $this->table . " WHERE " . $this->pk . "=:cond;", [':cond' => $_id]);
+        return $this->getBy($this->pk, $_id, false);
     }
 
     /**
@@ -92,7 +112,7 @@ class Repository implements RepositoryInterface
      */
     public function getRandom(): array
     {
-        return $this->db->query("SELECT * FROM " . $this->table . " ORDER BY RAND() ASC LIMIT 1;");
+        return $this->db[array_rand($this->db)];
     }
 
     /**
@@ -102,9 +122,7 @@ class Repository implements RepositoryInterface
      */
     public function validate(array &$_input): bool
     {
-        return true;
-        /*$m = $this->getFirst();
-        return empty(array_diff_key($m, $_input));*/
+        return false;
     }
 
     /**
@@ -114,9 +132,6 @@ class Repository implements RepositoryInterface
      */
     public function add(array $_input) : bool
     {
-        if($this->validate($_input)) {
-            return $this->db->insert($this->table, $_input) > 0;
-        }
         return false;
     }
 
@@ -127,9 +142,6 @@ class Repository implements RepositoryInterface
      */
     public function update(array $_input): bool
     {
-        if($this->validate($_input)) {
-            return $this->db->update($this->table, $this->pk, $_input) > 0;
-        }
         return false;
     }
 
@@ -140,6 +152,6 @@ class Repository implements RepositoryInterface
      */
     public function delete($_id): bool
     {   
-        return $this->db->delete($this->table, $this->pk, $_id) > 0;
-    }   
+        return false;
+    }
 }
