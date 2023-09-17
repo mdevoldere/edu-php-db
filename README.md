@@ -3,7 +3,7 @@
 For educational purposes. Please do not use this on production environment.
 
 ## Require 
-- PHP >=8.1
+- PHP >= 8.1
 - mysql/mariadb or sqlite
 
 ## Basic Examples 

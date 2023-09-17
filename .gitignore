@@ -5,6 +5,7 @@
 
 Db/_old/
 vendor/
+/composer.lock
 
 # User-specific files
 *.rsuser

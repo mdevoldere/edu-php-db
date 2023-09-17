@@ -16,11 +16,17 @@ use Md\Db\Exceptions\BadDbConfigException;
  */
 class Db 
 {
+    /** @var string $cfgDir The directory containing DbContext config files */
     private static string $cfgDir = '';
 
     /** @var DbContextInterface[] $ctx DbContext storage */
     private static array $ctx = [];
 
+
+    /**
+     * Set config files directory (used by Db::getContext())
+     * @param string $_dir a valid directory containing DbContext config files
+     */
     public static function setConfigDirectory(string $_dir): void
     {
         if(!is_dir($_dir)) {
@@ -32,7 +38,7 @@ class Db
 
     /**
      * Get DbContext by name
-     * @param string $_context the DbContext Name
+     * @param string $_context the DbContext FileName
      * @return DbContextInterface the DbContext object
      */
     public static function getContext(string $_context = 'default'): DbContextInterface
@@ -85,7 +91,7 @@ class Db
     }
 
     /**
-     * 
+     * Get a MySQL PDO instance
      */
     public static function getPdoMysql(string $dsn, string $username = 'root', string $password = '', array $options = []): PDO
     {
@@ -100,7 +106,7 @@ class Db
     }
 
     /**
-     * 
+     * Get a Sqlite PDO instance
      */
     public static function getPdoSqlite(string $file): PDO
     {
