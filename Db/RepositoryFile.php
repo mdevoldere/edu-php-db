@@ -44,6 +44,10 @@ class RepositoryFile implements RepositoryInterface
         $this->db = ($ext === 'json' 
                     ? json_decode(file_get_contents($this->file), true) 
                     : (require $this->file));
+        
+        if(!is_array($this->db)) {
+            throw new BadContextException('Invalid DbFile format');
+        }
     }
 
     /**
